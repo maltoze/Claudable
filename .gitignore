@@ -92,3 +92,5 @@ data/
 docs/
 
 .claude/
+
+python-dist/

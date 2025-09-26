@@ -4,7 +4,8 @@
   "private": true,
   "description": "CC Lovable Development Environment",
   "workspaces": [
-    "apps/web"
+    "apps/web",
+    "electron"
   ],
   "scripts": {
     "dev": "npm run ensure:env && npm run ensure:venv && concurrently --raw \"npm run dev:api\" --prefix \"[WEB] \" \"npm run dev:web\"",
@@ -16,7 +17,17 @@
     "setup": "npm install",
     "clean": "node scripts/clean.js",
     "db:reset": "node scripts/reset-db.js",
-    "db:backup": "node scripts/backup-db.js"
+    "db:backup": "node scripts/backup-db.js",
+    "electron:start": "npm run start --workspace=electron",
+    "electron:dev": "npm run electron-dev --workspace=electron", 
+    "electron:package": "npm run package --workspace=electron",
+    "electron:make": "npm run make --workspace=electron",
+    "electron:dist": "npm run dist --workspace=electron",
+    "electron:dist:mac": "npm run dist:mac --workspace=electron",
+    "electron:dist:win": "npm run dist:win --workspace=electron",
+    "electron:dist:linux": "npm run dist:linux --workspace=electron",
+    "electron:publish": "npm run publish --workspace=electron",
+    "build:web": "npm run build --workspace=apps/web"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

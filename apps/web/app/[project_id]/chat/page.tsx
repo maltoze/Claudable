@@ -15,7 +15,7 @@ import { useGlobalSettings } from '@/contexts/GlobalSettingsContext';
 
 // 더 이상 ProjectSettings을 로드하지 않음 (메인 페이지에서 글로벌 설정으로 관리)
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8080';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000';
 
 // Define assistant brand colors
 const assistantBrandColors: { [key: string]: string } = {

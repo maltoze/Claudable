@@ -25,6 +25,12 @@ configure_logging()
 
 app = FastAPI(title="Clovable API")
 
+# Health check endpoint for Electron
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for monitoring service status"""
+    return {"status": "healthy", "service": "clovable-api"}
+
 # Middleware to suppress logging for specific endpoints
 class LogFilterMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -98,6 +104,24 @@ def on_startup() -> None:
     env_info = {
         "Environment": os.getenv("ENVIRONMENT", "development"),
         "Debug": os.getenv("DEBUG", "false"),
-        "Port": os.getenv("PORT", "8000")
+        "Port": os.getenv("PORT", "18274")
     }
     ui.status_line(env_info)
+
+
+if __name__ == "__main__":
+    import uvicorn
+    import os
+    
+    port = int(os.getenv("PORT", "18274"))
+    host = os.getenv("HOST", "0.0.0.0")
+    
+    ui.info(f"Starting server on {host}:{port}")
+    
+    uvicorn.run(
+        app,  # 直接使用 app 对象而不是字符串
+        host=host,
+        port=port,
+        reload=False,  # No reload for production binary
+        log_level="info"
+    )
