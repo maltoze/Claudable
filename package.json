@@ -1,42 +1,33 @@
 {
-  "name": "cc-lovable",
-  "version": "1.0.0",
-  "private": true,
-  "description": "CC Lovable Development Environment",
-  "workspaces": [
-    "apps/web",
-    "electron"
-  ],
-  "scripts": {
-    "dev": "npm run ensure:env && npm run ensure:venv && concurrently --raw \"npm run dev:api\" --prefix \"[WEB] \" \"npm run dev:web\"",
-    "dev:api": "node scripts/run-api.js",
-    "dev:web": "node scripts/run-web.js",
-    "ensure:env": "node scripts/setup-env.js",
-    "ensure:venv": "node scripts/setup-venv.js",
-    "postinstall": "npm run ensure:env && npm run ensure:venv",
-    "setup": "npm install",
-    "clean": "node scripts/clean.js",
-    "db:reset": "node scripts/reset-db.js",
-    "db:backup": "node scripts/backup-db.js",
-    "electron:start": "npm run start --workspace=electron",
-    "electron:dev": "npm run electron-dev --workspace=electron", 
-    "electron:package": "npm run package --workspace=electron",
-    "electron:make": "npm run make --workspace=electron",
-    "electron:make:mac": "npm run make:mac --workspace=electron",
-    "electron:make:win": "npm run make:win --workspace=electron",
-    "electron:make:linux": "npm run make:linux --workspace=electron",
-    "electron:publish": "npm run publish --workspace=electron",
-    "build:web": "npm run build --workspace=apps/web"
-  },
-  "devDependencies": {
-    "concurrently": "^8.2.2",
-    "dotenv": "^16.4.5"
-  },
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=9.0.0"
-  },
-  "dependencies": {
-    "react-icons": "^5.5.0"
-  }
+    "name": "cc-lovable",
+    "version": "1.0.0",
+    "private": true,
+    "description": "CC Lovable Development Environment",
+    "workspaces": [
+        "apps/web"
+    ],
+    "scripts": {
+        "dev": "npm run ensure:env && npm run ensure:venv && concurrently --raw \"npm run dev:api\" --prefix \"[WEB] \" \"npm run dev:web\"",
+        "dev:api": "node scripts/run-api.js",
+        "dev:web": "node scripts/run-web.js",
+        "ensure:env": "node scripts/setup-env.js",
+        "ensure:venv": "node scripts/setup-venv.js",
+        "postinstall": "npm run ensure:env && npm run ensure:venv",
+        "setup": "npm install",
+        "clean": "node scripts/clean.js",
+        "db:reset": "node scripts/reset-db.js",
+        "db:backup": "node scripts/backup-db.js",
+        "build:web": "npm run build --workspace=apps/web"
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.2",
+        "dotenv": "^16.4.5"
+    },
+    "engines": {
+        "node": ">=18.0.0",
+        "npm": ">=9.0.0"
+    },
+    "dependencies": {
+        "react-icons": "^5.5.0"
+    }
 }
