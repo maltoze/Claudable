@@ -9,8 +9,8 @@ const envFile = path.join(rootDir, '.env');
 const webEnvFile = path.join(rootDir, 'apps', 'web', '.env.local');
 
 // Default ports
-const DEFAULT_API_PORT = 8080;
-const DEFAULT_WEB_PORT = 3000;
+const DEFAULT_API_PORT = 18274;
+const DEFAULT_WEB_PORT = 18273;
 
 // Robust check: consider a port unavailable if a TCP connection succeeds
 // This avoids false positives when another process bound the port with SO_REUSEPORT

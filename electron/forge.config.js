@@ -8,7 +8,10 @@ module.exports = {
         name: "Claudable",
         executableName: "Claudable",
         icon: "../assets/Claudable_Icon",
-        asar: true,
+        // asar: {
+        //     unpack: "**/node_modules/fix-path/**",
+        // },
+        asar: false,
         ignore: [/\.git/, /\.DS_Store/, /node_modules\/\.cache/, /out/],
         extraResource: [
             "../apps/web/.next/standalone",
@@ -19,21 +22,41 @@ module.exports = {
         osxSign: {},
         afterCopyExtraResources: [
             (buildPath, electronVersion, platform, arch, callback) => {
-                const resourcesPath = path.join(buildPath, 'Claudable.app', 'Contents', 'Resources');
+                const resourcesPath = path.join(
+                    buildPath,
+                    "Claudable.app",
+                    "Contents",
+                    "Resources",
+                );
                 fs.renameSync(
-                    path.join(resourcesPath, 'public'),
-                    path.join(resourcesPath, 'standalone', 'apps', 'web', 'public')
-                )
+                    path.join(resourcesPath, "public"),
+                    path.join(
+                        resourcesPath,
+                        "standalone",
+                        "apps",
+                        "web",
+                        "public",
+                    ),
+                );
                 // move static to standalone .next
                 fs.renameSync(
-                    path.join(resourcesPath, 'static'),
-                    path.join(resourcesPath, 'standalone', 'apps', 'web', '.next', 'static')
+                    path.join(resourcesPath, "static"),
+                    path.join(
+                        resourcesPath,
+                        "standalone",
+                        "apps",
+                        "web",
+                        ".next",
+                        "static",
+                    ),
                 );
                 callback();
             },
         ],
     },
-    rebuildConfig: {},
+    rebuildConfig: {
+        force: true,
+    },
     makers: [
         {
             name: "@electron-forge/maker-squirrel",
@@ -87,10 +110,10 @@ module.exports = {
         },
     ],
     plugins: [
-        {
-            name: "@electron-forge/plugin-auto-unpack-natives",
-            config: {},
-        },
+        // {
+        //     name: "@electron-forge/plugin-auto-unpack-natives",
+        //     config: {},
+        // },
         // Fuses are used to enable/disable various Electron functionality
         // at package time, before code signing the application
         new FusesPlugin({
