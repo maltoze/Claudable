@@ -20,7 +20,7 @@
     "make:linux": "electron-forge make --platform=linux",
     "build": "npm run build:web && npm run build:api",
     "build:web": "cd ../apps/web && npm run build",
-    "build:api": "cd ../apps/api && python build_binary.py"
+    "build:api": "cd ../apps/api && uv run build_binary.py"
   },
   "dependencies": {
   },
