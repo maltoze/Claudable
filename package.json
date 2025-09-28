@@ -22,10 +22,9 @@
     "electron:dev": "npm run electron-dev --workspace=electron", 
     "electron:package": "npm run package --workspace=electron",
     "electron:make": "npm run make --workspace=electron",
-    "electron:dist": "npm run dist --workspace=electron",
-    "electron:dist:mac": "npm run dist:mac --workspace=electron",
-    "electron:dist:win": "npm run dist:win --workspace=electron",
-    "electron:dist:linux": "npm run dist:linux --workspace=electron",
+    "electron:make:mac": "npm run make:mac --workspace=electron",
+    "electron:make:win": "npm run make:win --workspace=electron",
+    "electron:make:linux": "npm run make:linux --workspace=electron",
     "electron:publish": "npm run publish --workspace=electron",
     "build:web": "npm run build --workspace=apps/web"
   },
