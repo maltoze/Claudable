@@ -9,8 +9,7 @@
   "private": true,
   "homepage": ".",
   "scripts": {
-    "electron": "electron .",
-    "electron-dev": "ELECTRON_IS_DEV=true electron .",
+    "dev": "ELECTRON_IS_DEV=true electron .",
     "start": "electron-forge start",
     "package": "electron-forge package",
     "publish": "electron-forge publish",
@@ -36,6 +35,7 @@
     "@electron-forge/plugin-fuses": "^7.9.0",
     "@electron-forge/publisher-github": "^7.9.0",
     "@electron/fuses": "^1.8.0",
+    "dotenv": "^17.2.2",
     "electron": "^38.2.0"
   }
 }

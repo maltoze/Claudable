@@ -1,7 +1,10 @@
+const dotenv = require("dotenv");
 const { FusesPlugin } = require("@electron-forge/plugin-fuses");
 const { FuseV1Options, FuseVersion } = require("@electron/fuses");
 const path = require("path");
 const fs = require("fs");
+
+dotenv.config();
 
 module.exports = {
     packagerConfig: {
@@ -16,7 +19,14 @@ module.exports = {
             "../apps/web/public",
             "./python-dist",
         ],
-        osxSign: {},
+        osxSign: process.env.ELECTRON_IS_DEV ? false : {},
+        osxNotarize: process.env.ELECTRON_IS_DEV
+            ? undefined
+            : {
+                  appleId: process.env.APPLE_ID,
+                  appleIdPassword: process.env.APPLE_PASSWORD,
+                  teamId: process.env.APPLE_TEAM_ID,
+              },
         afterCopyExtraResources: [
             (buildPath, electronVersion, platform, arch, callback) => {
                 const resourcesPath = path.join(
@@ -107,10 +117,10 @@ module.exports = {
         },
     ],
     plugins: [
-        // {
-        //     name: "@electron-forge/plugin-auto-unpack-natives",
-        //     config: {},
-        // },
+        {
+            name: "@electron-forge/plugin-auto-unpack-natives",
+            config: {},
+        },
         // Fuses are used to enable/disable various Electron functionality
         // at package time, before code signing the application
         new FusesPlugin({

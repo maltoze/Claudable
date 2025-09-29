@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, shell } = require("electron");
+const { app, BrowserWindow, dialog, shell, ipcMain } = require("electron");
 const { spawn, fork } = require("child_process");
 const path = require("path");
 const fs = require("fs");
@@ -254,11 +254,32 @@ async function startPythonAPI() {
                 return;
             }
 
+            const projectsRootPath = path.join(
+                app.getPath("userData"),
+                "projects",
+            );
+            console.log(`🔍 Projects root path: ${projectsRootPath}`);
+            if (!fs.existsSync(projectsRootPath)) {
+                fs.mkdirSync(projectsRootPath, { recursive: true });
+            }
+
+            const dataPath = path.join(app.getPath("userData"), "data");
+            if (!fs.existsSync(dataPath)) {
+                fs.mkdirSync(dataPath, { recursive: true });
+            }
+            const databaseUrl = `sqlite:///${path.join(app.getPath("userData"), "data", "cc.db")}`;
+            console.log(`🔍 Database URL: ${databaseUrl}`);
+
             console.log("🐍 Starting FastAPI production server...");
             pythonProcess = spawn(binaryPath, [], {
                 cwd: path.dirname(binaryPath),
                 stdio: ["ignore", "pipe", "pipe"],
-                env: { ...process.env, PORT: String(API_PORT) },
+                env: {
+                    ...process.env,
+                    PORT: String(API_PORT),
+                    PROJECTS_ROOT: projectsRootPath,
+                    DATABASE_URL: databaseUrl,
+                },
             });
         }
 
@@ -296,6 +317,61 @@ async function startPythonAPI() {
     });
 }
 
+// IPC处理程序 - 执行CLI安装命令
+ipcMain.handle("execute-install-command", async (event, installCommand) => {
+    try {
+        console.log(`🔧 Executing install command: ${installCommand}`);
+
+        return new Promise((resolve, reject) => {
+            const { exec } = require("child_process");
+
+            // 执行安装命令
+            const process = exec(installCommand, (error, stdout, stderr) => {
+                if (error) {
+                    console.error(
+                        `❌ Install command failed: ${error.message}`,
+                    );
+                    reject({
+                        success: false,
+                        error: error.message,
+                        stderr: stderr,
+                    });
+                    return;
+                }
+
+                console.log(`✅ Install command completed successfully`);
+                console.log(`stdout: ${stdout}`);
+
+                resolve({
+                    success: true,
+                    stdout: stdout,
+                    stderr: stderr,
+                });
+            });
+
+            // 设置超时时间（5分钟）
+            setTimeout(
+                () => {
+                    process.kill();
+                    reject({
+                        success: false,
+                        error: "Installation timeout (5 minutes)",
+                        stderr: "",
+                    });
+                },
+                5 * 60 * 1000,
+            );
+        });
+    } catch (error) {
+        console.error(`💥 Failed to execute install command: ${error.message}`);
+        return {
+            success: false,
+            error: error.message,
+            stderr: "",
+        };
+    }
+});
+
 // 创建主窗口
 async function createMainWindow() {
     mainWindow = new BrowserWindow({
@@ -308,6 +384,8 @@ async function createMainWindow() {
             contextIsolation: true,
             enableRemoteModule: false,
             webSecurity: true,
+            preload: path.join(__dirname, "preload.js"),
+            devTools: !isDev,
         },
         icon: path.join(__dirname, "..", "assets", "Claudable_Icon.png"),
         // titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',

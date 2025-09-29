@@ -87,7 +87,7 @@ async def get_cli_status() -> Dict[str, Any]:
     from app.services.cli.unified_manager import ClaudeCodeCLI, CursorAgentCLI, CodexCLI, QwenCLI, GeminiCLI
     cli_instances = {
         "claude": ClaudeCodeCLI(),
-        "cursor": CursorAgentCLI(),
+        # "cursor": CursorAgentCLI(),
         "codex": CodexCLI(),
         "qwen": QwenCLI(),
         "gemini": GeminiCLI()

@@ -703,7 +703,7 @@ export default function HomePage() {
   const assistantOptions = [
     { id: 'claude', name: 'Claude Code', icon: '/claude.png' },
     { id: 'codex', name: 'Codex CLI', icon: '/oai.png' },
-    { id: 'cursor', name: 'Cursor Agent', icon: '/cursor.png' },
+    // { id: 'cursor', name: 'Cursor Agent', icon: '/cursor.png' },
     { id: 'gemini', name: 'Gemini CLI', icon: '/gemini.png' },
     { id: 'qwen', name: 'Qwen Coder', icon: '/qwen.png' }
   ];
@@ -1104,29 +1104,99 @@ export default function HomePage() {
                   
                   {showAssistantDropdown && (
                     <div className="absolute top-full mt-1 left-0 z-[300] min-w-full whitespace-nowrap rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 backdrop-blur-xl shadow-lg">
-                      {assistantOptions.map((option) => (
-                        <button
-                          key={option.id}
-                          onClick={() => handleAssistantChange(option.id)}
-                          disabled={!cliStatus[option.id]?.installed}
-                          className={`w-full flex items-center gap-2 px-3 py-2 text-left first:rounded-t-2xl last:rounded-b-2xl transition-colors ${
-                            !cliStatus[option.id]?.installed
-                              ? 'opacity-50 cursor-not-allowed text-gray-400 dark:text-gray-500'
-                              : selectedAssistant === option.id 
-                              ? 'bg-gray-100 dark:bg-white/10 text-black dark:text-white font-semibold' 
-                              : 'text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
-                          }`}
-                        >
-                          <div className="w-4 h-4 rounded overflow-hidden">
-                            <img 
-                              src={option.icon} 
-                              alt={option.name}
-                              className="w-full h-full object-contain"
-                            />
+                      {assistantOptions.map((option) => {
+                        const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
+                        const isInstalled = cliStatus[option.id]?.installed;
+                        
+                        return (
+                          <div key={option.id} className="relative group">
+                            <button
+                              onClick={() => handleAssistantChange(option.id)}
+                              disabled={!isInstalled}
+                              className={`w-full flex items-center gap-2 px-3 py-2 text-left first:rounded-t-2xl last:rounded-b-2xl transition-colors ${
+                                !isInstalled
+                                  ? 'opacity-50 cursor-not-allowed text-gray-400 dark:text-gray-500'
+                                  : selectedAssistant === option.id 
+                                  ? 'bg-gray-100 dark:bg-white/10 text-black dark:text-white font-semibold' 
+                                  : 'text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
+                              }`}
+                            >
+                              <div className="w-4 h-4 rounded overflow-hidden">
+                                <img 
+                                  src={option.icon} 
+                                  alt={option.name}
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                              <span className="text-sm font-medium">{option.name}</span>
+                            </button>
+                            
+                            {/* Install overlay for electron + not installed */}
+                            {isElectron && !isInstalled && (
+                              <div className="absolute inset-0 bg-white/10 backdrop-blur-sm opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center z-10">
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    try {
+                                      showToast('正在安装...', 'success');
+                                      if (window.electronAPI) {
+                                        // Get install command from CLI_OPTIONS
+                                        const CLI_OPTIONS = [
+                                          {
+                                            id: 'claude',
+                                            installCommand: 'npm install -g @anthropic-ai/claude-code',
+                                          },
+                                          {
+                                            id: 'cursor',
+                                            installCommand: '# See official guide: https://cursor.com/cli',
+                                          },
+                                          {
+                                            id: 'qwen',
+                                            installCommand: 'npm install -g @qwen-code/qwen-code@latest',
+                                          },
+                                          {
+                                            id: 'gemini',
+                                            installCommand: 'npm install -g @google/gemini-cli',
+                                          },
+                                          {
+                                            id: 'codex',
+                                            installCommand: 'npm install -g @openai/codex',
+                                          }
+                                        ];
+                                        
+                                        const cliOption = CLI_OPTIONS.find(cli => cli.id === option.id);
+                                        if (cliOption) {
+                                          const result = await window.electronAPI.executeInstallCommand(cliOption.installCommand);
+                                          if (result.success) {
+                                            showToast('安装成功！', 'success');
+                                            // Refresh CLI status
+                                            setTimeout(() => {
+                                              // Trigger CLI status check
+                                              window.location.reload();
+                                            }, 1000);
+                                          } else {
+                                            showToast(`安装失败: ${result.error}`, 'error');
+                                          }
+                                        } else {
+                                          showToast('未找到安装命令', 'error');
+                                        }
+                                      } else {
+                                        showToast('Electron API不可用', 'error');
+                                      }
+                                    } catch (error) {
+                                      const errorMessage = error instanceof Error ? error.message : '未知错误';
+                                      showToast(`安装失败: ${errorMessage}`, 'error');
+                                    }
+                                  }}
+                                  className="px-3 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-lg text-xs"
+                                >
+                                  Install
+                                </button>
+                              </div>
+                            )}
                           </div>
-                          <span className="text-sm font-medium">{option.name}</span>
-                        </button>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
