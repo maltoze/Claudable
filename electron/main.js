@@ -3,8 +3,11 @@ const { spawn, fork } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 const fixPath = require("fix-path");
+const shellEnv = require('shell-env')
 
 fixPath();
+
+process.env = shellEnv.shellEnvSync();
 
 // 简化的开发模式检测，不依赖外部模块
 const isDev =

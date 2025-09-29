@@ -22,7 +22,8 @@
     "build:api": "cd ../apps/api && uv run build_binary.py"
   },
   "dependencies": {
-    "fix-path": "^3.0.0"
+    "fix-path": "^3.0.0",
+    "shell-env": "^4.0.1"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.9.0",
