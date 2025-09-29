@@ -385,7 +385,7 @@ async function createMainWindow() {
             enableRemoteModule: false,
             webSecurity: true,
             preload: path.join(__dirname, "preload.js"),
-            devTools: !isDev,
+            devTools: isDev,
         },
         icon: path.join(__dirname, "..", "assets", "Claudable_Icon.png"),
         // titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
