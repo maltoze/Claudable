@@ -8,10 +8,7 @@ module.exports = {
         name: "Claudable",
         executableName: "Claudable",
         icon: "../assets/Claudable_Icon",
-        // asar: {
-        //     unpack: "**/node_modules/fix-path/**",
-        // },
-        asar: false,
+        asar: true,
         ignore: [/\.git/, /\.DS_Store/, /node_modules\/\.cache/, /out/],
         extraResource: [
             "../apps/web/.next/standalone",
