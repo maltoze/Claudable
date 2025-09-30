@@ -48,7 +48,7 @@ interface ChatInputProps {
 export default function ChatInput({ 
   onSendMessage, 
   disabled = false, 
-  placeholder = "Ask Claudable...",
+  placeholder = "Ask Claudecode desktop...",
   mode = 'act',
   onModeChange,
   projectId,

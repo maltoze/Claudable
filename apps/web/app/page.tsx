@@ -1027,7 +1027,7 @@ export default function HomePage() {
                     lineHeight: '72px'
                   }}
                 >
-                  Claudable
+                  Claudecode desktop
                 </h1>
               </div>
               <p className="text-xl text-gray-700 dark:text-white/80 font-light tracking-tight">
@@ -1103,7 +1103,7 @@ export default function HomePage() {
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Ask Claudable to create a blog about..."
+                  placeholder="Ask Claudecode desktop to create a blog about..."
                   disabled={isCreatingProject}
                   className="flex w-full rounded-md px-2 py-2 placeholder:text-gray-400 dark:placeholder:text-white/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 resize-none text-[16px] leading-snug md:text-base focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent focus:bg-transparent flex-1 text-gray-900 dark:text-white overflow-y-auto"
                   style={{ height: '120px' }}
@@ -1274,7 +1274,7 @@ export default function HomePage() {
                                               window.location.reload();
                                             }, 1000);
                                           } else {
-                                            showToast(`Installation failed: ${result.error}`, 'error');
+                                            showToast(`Installation failed: ${JSON.stringify(result.error)}`, 'error');
                                           }
                                         } else {
                                           showToast('Unable to find install command', 'error');
@@ -1284,7 +1284,7 @@ export default function HomePage() {
                                       }
                                     } catch (error) {
                                       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-                                      showToast(`Installation failed: ${errorMessage}`, 'error');
+                                      showToast(`Installation failed: ${JSON.stringify(errorMessage)}`, 'error');
                                     }
                                   }}
                                   className="px-3 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-lg text-xs"

@@ -1811,7 +1811,7 @@ export default function ChatPage({ params }: Params) {
                   runAct(message, images);
                 }}
                 disabled={isRunning}
-                placeholder={mode === 'act' ? "Ask Claudable..." : "Chat with Claudable..."}
+                placeholder={mode === 'act' ? "Ask Claudecode desktop..." : "Chat with Claudecode desktop..."}
                 mode={mode}
                 onModeChange={setMode}
                 projectId={projectId}

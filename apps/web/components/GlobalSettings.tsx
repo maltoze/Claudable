@@ -706,7 +706,7 @@ export default function GlobalSettings({ isOpen, onClose, initialTab = 'general'
                       className="relative z-10 w-full h-full object-contain rounded-2xl shadow-lg"
                     />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Claudable</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Claudecode desktop</h3>
                   <p className="text-gray-600 dark:text-gray-400 mt-2 font-medium">Version 1.0.0</p>
                 </div>
                 
@@ -738,7 +738,7 @@ export default function GlobalSettings({ isOpen, onClose, initialTab = 'general'
                   </div>
                 </div>
 
-                <div className="text-center">
+                {/* <div className="text-center">
                   <div className="flex justify-center gap-6">
                     <a 
                       href="https://github.com/opactorai/Claudable" 
@@ -757,7 +757,7 @@ export default function GlobalSettings({ isOpen, onClose, initialTab = 'general'
                       Discord
                     </a>
                   </div>
-                </div>
+                </div> */}
               </div>
             )}
           </div>
