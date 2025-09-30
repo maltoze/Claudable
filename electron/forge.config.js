@@ -8,8 +8,8 @@ dotenv.config();
 
 module.exports = {
     packagerConfig: {
-        name: "Claudable Desktop",
-        executableName: "Claudable Desktop",
+        name: "Claudecode desktop",
+        executableName: "Claudecode desktop",
         icon: "../assets/Claudable_Icon",
         asar: true,
         ignore: [/\.git/, /\.DS_Store/, /node_modules\/\.cache/, /out/],
@@ -19,7 +19,10 @@ module.exports = {
             "../apps/web/public",
             "./python-dist",
         ],
-        osxSign: process.env.ELECTRON_IS_DEV ? false : {},
+        osxSign: process.env.ELECTRON_IS_DEV ? false : {
+            entitlements: "./entitlements.mac.plist",
+            "entitlements-inherit": "./entitlements.mac.plist",
+        },
         osxNotarize: process.env.ELECTRON_IS_DEV
             ? undefined
             : {
@@ -27,11 +30,14 @@ module.exports = {
                   appleIdPassword: process.env.APPLE_PASSWORD,
                   teamId: process.env.APPLE_TEAM_ID,
               },
+        extendInfo: {
+            NSAppleEventsUsageDescription: "Claudable needs to control Terminal.app to launch CLI tools for development.",
+        },
         afterCopyExtraResources: [
             (buildPath, electronVersion, platform, arch, callback) => {
                 const resourcesPath = path.join(
                     buildPath,
-                    "Claudable.app",
+                    "Claudecode desktop.app",
                     "Contents",
                     "Resources",
                 );
