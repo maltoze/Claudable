@@ -327,9 +327,18 @@ ipcMain.handle("execute-install-command", async (event, installCommand) => {
 
         return new Promise((resolve, reject) => {
             const { exec } = require("child_process");
+            
+            let finalCommand = installCommand;
+            
+            // macOS: 使用 AppleScript 请求管理员权限
+            if (process.platform === 'darwin') {
+                const escapedCommand = installCommand.replace(/"/g, '\\"');
+                finalCommand = `osascript -e 'do shell script "${escapedCommand}" with administrator privileges'`;
+                console.log(`🔧 Using AppleScript for sudo on macOS`);
+            }
 
             // 执行安装命令
-            const process = exec(installCommand, (error, stdout, stderr) => {
+            const childProcess = exec(finalCommand, (error, stdout, stderr) => {
                 if (error) {
                     console.error(
                         `❌ Install command failed: ${error.message}`,
@@ -355,7 +364,7 @@ ipcMain.handle("execute-install-command", async (event, installCommand) => {
             // 设置超时时间（5分钟）
             setTimeout(
                 () => {
-                    process.kill();
+                    childProcess.kill();
                     reject({
                         success: false,
                         error: "Installation timeout (5 minutes)",
