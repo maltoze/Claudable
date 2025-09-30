@@ -364,7 +364,7 @@ export default function GlobalSettings({ isOpen, onClose, initialTab = 'general'
                 </span>
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Global Settings</h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Configure your Claudable preferences</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Configure your Claudecode desktop preferences</p>
                 </div>
               </div>
               <button
