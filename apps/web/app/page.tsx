@@ -19,7 +19,7 @@ const CLI_OPTIONS = [
         id: "claude",
         installCommand:
             "npm install -g @anthropic-ai/claude-code && npm install -g @musistudio/claude-code-router",
-        launchCommand: "claude",
+        launchCommand: "ccr code",
     },
     {
         id: "qwen",
@@ -731,7 +731,7 @@ export default function HomePage() {
   const handleLaunchClaude = async () => {
     try {
       if (window.electronAPI) {
-        const result = await window.electronAPI.executeCommand('claude');
+        const result = await window.electronAPI.executeCommand('ccr code');
         if (result.success) {
           showToast('Claude CLI launched in terminal', 'success');
         } else {
