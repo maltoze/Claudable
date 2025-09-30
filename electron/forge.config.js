@@ -8,8 +8,8 @@ dotenv.config();
 
 module.exports = {
     packagerConfig: {
-        name: "Claudable",
-        executableName: "Claudable",
+        name: "Claudable Desktop",
+        executableName: "Claudable Desktop",
         icon: "../assets/Claudable_Icon",
         asar: true,
         ignore: [/\.git/, /\.DS_Store/, /node_modules\/\.cache/, /out/],

@@ -14,6 +14,30 @@ const fetchAPI = globalThis.fetch || fetch;
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8080';
 
+const CLI_OPTIONS = [
+    {
+        id: "claude",
+        installCommand:
+            "npm install -g @anthropic-ai/claude-code && npm install -g @musistudio/claude-code-router",
+        launchCommand: "claude",
+    },
+    {
+        id: "qwen",
+        installCommand: "npm install -g @qwen-code/qwen-code@latest",
+        launchCommand: "qwen",
+    },
+    {
+        id: "gemini",
+        installCommand: "npm install -g @google/gemini-cli",
+        launchCommand: "gemini",
+    },
+    {
+        id: "codex",
+        installCommand: "npm install -g @openai/codex",
+        launchCommand: "codex",
+    },
+];
+
 type Project = { 
   id: string; 
   name: string; 
@@ -57,6 +81,7 @@ export default function HomePage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [cliStatus, setCLIStatus] = useState<{ [key: string]: { installed: boolean; checking: boolean; version?: string; error?: string; } }>({});
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [claudeInstalled, setClaudeInstalled] = useState(false);
   
   // Define models for each assistant statically
   const modelsByAssistant = {
@@ -179,6 +204,8 @@ export default function HomePage() {
         if (response.ok) {
           const data = await response.json();
           setCLIStatus(data);
+          // Set Claude installed status
+          setClaudeInstalled(data.claude?.installed || false);
         } else {
           // Fallback if API endpoint doesn't exist
           const fallbackStatus: { [key: string]: { installed: boolean; checking: boolean; error: string; } } = {};
@@ -700,6 +727,40 @@ export default function HomePage() {
     setShowModelDropdown(false);
   };
 
+  // Handle Claude CLI launch
+  const handleLaunchClaude = async () => {
+    try {
+      if (window.electronAPI) {
+        const result = await window.electronAPI.executeCommand('claude');
+        if (result.success) {
+          showToast('Claude CLI launched in terminal', 'success');
+        } else {
+          showToast(`Failed to launch Claude CLI: ${result.error}`, 'error');
+        }
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      showToast(`Failed to launch: ${errorMessage}`, 'error');
+    }
+  };
+
+  // Handle CCR UI launch
+  const handleLaunchCCR = async () => {
+    try {
+      if (window.electronAPI) {
+        const result = await window.electronAPI.executeCommand('ccr ui');
+        if (result.success) {
+          showToast('CCR UI launched in terminal', 'success');
+        } else {
+          showToast(`Failed to launch CCR UI: ${result.error}`, 'error');
+        }
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      showToast(`Failed to launch: ${errorMessage}`, 'error');
+    }
+  };
+
   const assistantOptions = [
     { id: 'claude', name: 'Claude Code', icon: '/claude.png' },
     { id: 'codex', name: 'Codex CLI', icon: '/oai.png' },
@@ -999,6 +1060,32 @@ export default function HomePage() {
               </div>
             )}
 
+            {/* Claude CLI 快捷按钮 */}
+            {claudeInstalled && typeof window !== 'undefined' && window.electronAPI?.isElectron && (
+              <div className="mb-4 flex gap-0 justify-center items-center">
+                <button
+                  onClick={handleLaunchClaude}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-[#DE7356] hover:bg-[#c96548] text-white rounded-l-xl text-sm font-semibold transition-all shadow-lg hover:shadow-xl border-r border-white/20"
+                  title="Launch Claude Code CLI in terminal"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Claude Code CLI
+                </button>
+                <button
+                  onClick={handleLaunchCCR}
+                  className="flex items-center gap-1.5 px-4 py-2.5 bg-[#DE7356]/90 hover:bg-[#c96548] text-white/90 hover:text-white rounded-r-xl text-sm font-medium transition-all shadow-lg hover:shadow-xl"
+                  title="Launch Claude Code Router API Connect in terminal"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  API Connect
+                </button>
+              </div>
+            )}
+
             {/* Main Input Form */}
             <form 
               onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}
@@ -1129,6 +1216,39 @@ export default function HomePage() {
                                 />
                               </div>
                               <span className="text-sm font-medium">{option.name}</span>
+                              
+                              {/* Launch icon for installed CLIs */}
+                              {isElectron && isInstalled && (
+                                <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                  <button
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      try {
+                                        const cliOption = CLI_OPTIONS.find(cli => cli.id === option.id);
+                                        if (cliOption && window.electronAPI) {
+                                          const result = await window.electronAPI.executeCommand(cliOption.launchCommand);
+                                          if (result.success) {
+                                            showToast(`${option.name} launched in terminal`, 'success');
+                                          } else {
+                                            showToast(`Failed to launch ${option.name}: ${result.error}`, 'error');
+                                          }
+                                        } else {
+                                          showToast('Unable to find start command', 'error');
+                                        }
+                                      } catch (error) {
+                                        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                                        showToast(`Failed to launch: ${errorMessage}`, 'error');
+                                      }
+                                    }}
+                                    className="p-1 text-gray-400 hover:text-green-500 transition-colors rounded"
+                                    title={`Launch ${option.name} in terminal`}
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              )}
                             </button>
                             
                             {/* Install overlay for electron + not installed */}
@@ -1141,28 +1261,7 @@ export default function HomePage() {
                                       showToast('Installing...', 'success');
                                       if (window.electronAPI) {
                                         // Get install command from CLI_OPTIONS
-                                        const CLI_OPTIONS = [
-                                          {
-                                            id: 'claude',
-                                            installCommand: 'npm install -g @anthropic-ai/claude-code',
-                                          },
-                                          {
-                                            id: 'cursor',
-                                            installCommand: '# See official guide: https://cursor.com/cli',
-                                          },
-                                          {
-                                            id: 'qwen',
-                                            installCommand: 'npm install -g @qwen-code/qwen-code@latest',
-                                          },
-                                          {
-                                            id: 'gemini',
-                                            installCommand: 'npm install -g @google/gemini-cli',
-                                          },
-                                          {
-                                            id: 'codex',
-                                            installCommand: 'npm install -g @openai/codex',
-                                          }
-                                        ];
+                                        
                                         
                                         const cliOption = CLI_OPTIONS.find(cli => cli.id === option.id);
                                         if (cliOption) {

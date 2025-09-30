@@ -5,6 +5,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 执行安装命令
   executeInstallCommand: (installCommand) => ipcRenderer.invoke('execute-install-command', installCommand),
   
+  // 执行启动命令
+  executeCommand: (command) => ipcRenderer.invoke('execute-command', command),
+  
   // 检测是否在electron环境中
   isElectron: true,
   

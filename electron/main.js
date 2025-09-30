@@ -375,6 +375,73 @@ ipcMain.handle("execute-install-command", async (event, installCommand) => {
     }
 });
 
+// IPC处理程序 - 执行CLI启动命令
+ipcMain.handle("execute-command", async (event, command) => {
+    try {
+        console.log(`🚀 Executing command: ${command}`);
+
+        const { spawn } = require("child_process");
+        
+        // 根据平台选择合适的终端和命令
+        let terminalCommand, terminalArgs;
+        
+        if (process.platform === 'darwin') {
+            // macOS - 使用 AppleScript 启动 Terminal 并执行命令
+            terminalCommand = 'osascript';
+            terminalArgs = [
+                '-e',
+                `tell application "Terminal"
+                    activate
+                    do script "${command}"
+                end tell`
+            ];
+        } else if (process.platform === 'win32') {
+            // Windows - 使用 cmd
+            terminalCommand = 'cmd';
+            terminalArgs = ['/c', 'start', 'cmd', '/k', command];
+        } else {
+            // Linux - 尝试常见的终端
+            const terminals = ['gnome-terminal', 'konsole', 'xterm', 'x-terminal-emulator'];
+            terminalCommand = terminals.find(term => {
+                try {
+                    require('child_process').execSync(`which ${term}`, { stdio: 'ignore' });
+                    return true;
+                } catch {
+                    return false;
+                }
+            }) || 'xterm';
+            
+            if (terminalCommand === 'gnome-terminal') {
+                terminalArgs = ['--', 'bash', '-c', `${command}; exec bash`];
+            } else if (terminalCommand === 'konsole') {
+                terminalArgs = ['-e', 'bash', '-c', `${command}; exec bash`];
+            } else {
+                terminalArgs = ['-e', 'bash', '-c', `${command}; exec bash`];
+            }
+        }
+
+        const childProcess = spawn(terminalCommand, terminalArgs, {
+            detached: true,
+            stdio: 'ignore'
+        });
+
+        childProcess.unref();
+
+        console.log(`✅ Command executed successfully in terminal`);
+        return {
+            success: true,
+            message: "Command executed in terminal"
+        };
+
+    } catch (error) {
+        console.error(`💥 Failed to execute command: ${error.message}`);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+});
+
 // 创建主窗口
 async function createMainWindow() {
     mainWindow = new BrowserWindow({

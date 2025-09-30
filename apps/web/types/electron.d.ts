@@ -8,6 +8,11 @@ interface ElectronAPI {
     stderr?: string;
     error?: string;
   }>;
+  executeCommand: (command: string) => Promise<{
+    success: boolean;
+    message?: string;
+    error?: string;
+  }>;
 }
 
 declare global {
