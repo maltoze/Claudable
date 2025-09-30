@@ -67,9 +67,6 @@ module.exports = {
             },
         ],
     },
-    rebuildConfig: {
-        force: true,
-    },
     makers: [
         {
             name: "@electron-forge/maker-squirrel",
@@ -84,7 +81,7 @@ module.exports = {
         {
             name: "@electron-forge/maker-dmg",
             config: {
-                name: "Claudable",
+                name: "Claudecode desktop",
                 format: "ULFO",
             },
         },

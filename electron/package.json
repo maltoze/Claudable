@@ -1,6 +1,6 @@
 {
   "name": "claudable-electron",
-  "productName": "Claudable",
+  "productName": "Claudecode desktop",
   "version": "1.0.0",
   "description": "AI-powered code generation and project management desktop application",
   "main": "main.js",
