@@ -19,7 +19,7 @@ const CLI_OPTIONS = [
         id: "claude",
         installCommand:
             "npm install -g @anthropic-ai/claude-code && npm install -g @musistudio/claude-code-router",
-        launchCommand: "ccr code",
+        launchCommand: "claude",
     },
     {
         id: "qwen",
