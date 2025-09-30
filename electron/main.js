@@ -3,7 +3,7 @@ const { spawn, fork } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 const fixPath = require("fix-path");
-const shellEnv = require('shell-env')
+const shellEnv = require("shell-env");
 
 fixPath();
 
@@ -499,6 +499,18 @@ app.whenReady().then(async () => {
     }
 });
 
+function cleanup() {
+    if (nextProcess) {
+        nextProcess.kill("SIGTERM");
+        nextProcess = null;
+    }
+
+    if (pythonProcess) {
+        pythonProcess.kill("SIGTERM");
+        pythonProcess = null;
+    }
+}
+
 // macOS 特殊处理
 app.on("activate", async () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -515,41 +527,16 @@ app.on("window-all-closed", () => {
 
 app.on("before-quit", () => {
     console.log("🔄 Shutting down services...");
-
-    if (nextProcess) {
-        nextProcess.kill("SIGTERM");
-        nextProcess = null;
-    }
-
-    if (pythonProcess) {
-        pythonProcess.kill("SIGTERM");
-        pythonProcess = null;
-    }
+    cleanup();
 });
 
 // 处理未捕获的异常
 process.on("uncaughtException", (error) => {
     console.error("Uncaught Exception:", error);
-    if (nextProcess) {
-        nextProcess.kill("SIGTERM");
-        nextProcess = null;
-    }
-
-    if (pythonProcess) {
-        pythonProcess.kill("SIGTERM");
-        pythonProcess = null;
-    }
+    cleanup();
 });
 
 process.on("unhandledRejection", (reason, promise) => {
     console.error("Unhandled Rejection at:", promise, "reason:", reason);
-    if (nextProcess) {
-        nextProcess.kill("SIGTERM");
-        nextProcess = null;
-    }
-
-    if (pythonProcess) {
-        pythonProcess.kill("SIGTERM");
-        pythonProcess = null;
-    }
+    cleanup();
 });
