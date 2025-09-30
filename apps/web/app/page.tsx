@@ -1138,7 +1138,7 @@ export default function HomePage() {
                                   onClick={async (e) => {
                                     e.stopPropagation();
                                     try {
-                                      showToast('正在安装...', 'success');
+                                      showToast('Installing...', 'success');
                                       if (window.electronAPI) {
                                         // Get install command from CLI_OPTIONS
                                         const CLI_OPTIONS = [
@@ -1168,24 +1168,24 @@ export default function HomePage() {
                                         if (cliOption) {
                                           const result = await window.electronAPI.executeInstallCommand(cliOption.installCommand);
                                           if (result.success) {
-                                            showToast('安装成功！', 'success');
+                                            showToast('Installation successful!', 'success')
                                             // Refresh CLI status
                                             setTimeout(() => {
                                               // Trigger CLI status check
                                               window.location.reload();
                                             }, 1000);
                                           } else {
-                                            showToast(`安装失败: ${result.error}`, 'error');
+                                            showToast(`Installation failed: ${result.error}`, 'error');
                                           }
                                         } else {
-                                          showToast('未找到安装命令', 'error');
+                                          showToast('Unable to find install command', 'error');
                                         }
                                       } else {
-                                        showToast('Electron API不可用', 'error');
+                                        showToast('Electron API error', 'error');
                                       }
                                     } catch (error) {
-                                      const errorMessage = error instanceof Error ? error.message : '未知错误';
-                                      showToast(`安装失败: ${errorMessage}`, 'error');
+                                      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                                      showToast(`Installation failed: ${errorMessage}`, 'error');
                                     }
                                   }}
                                   className="px-3 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg font-medium hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-lg text-xs"
