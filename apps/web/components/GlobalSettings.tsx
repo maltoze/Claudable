@@ -713,7 +713,7 @@ export default function GlobalSettings({ isOpen, onClose, initialTab = 'general'
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-700 p-6 space-y-4">
                   <div className="text-center">
                     <p className="text-base text-gray-700 dark:text-gray-300 leading-relaxed max-w-2xl mx-auto">
-                      Claudable is an AI-powered development platform that integrates with GitHub, Supabase, and Vercel 
+                      Claudecode desktop is an AI-powered development platform that integrates with GitHub, Supabase, and Vercel 
                       to streamline your web development workflow.
                     </p>
                   </div>
