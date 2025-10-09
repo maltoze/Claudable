@@ -10,7 +10,7 @@ module.exports = {
     packagerConfig: {
         name: "Claudecode desktop",
         executableName: "Claudecode desktop",
-        icon: "../assets/Claudable_Icon",
+        icon: "../assets/icon",
         asar: true,
         ignore: [/\.git/, /\.DS_Store/, /node_modules\/\.cache/, /out/],
         extraResource: [
@@ -19,10 +19,12 @@ module.exports = {
             "../apps/web/public",
             "./python-dist",
         ],
-        osxSign: process.env.ELECTRON_IS_DEV ? false : {
-            entitlements: "./entitlements.mac.plist",
-            "entitlements-inherit": "./entitlements.mac.plist",
-        },
+        osxSign: process.env.ELECTRON_IS_DEV
+            ? false
+            : {
+                  entitlements: "./entitlements.mac.plist",
+                  "entitlements-inherit": "./entitlements.mac.plist",
+              },
         osxNotarize: process.env.ELECTRON_IS_DEV
             ? undefined
             : {
@@ -31,16 +33,20 @@ module.exports = {
                   teamId: process.env.APPLE_TEAM_ID,
               },
         extendInfo: {
-            NSAppleEventsUsageDescription: "Claudable needs to control Terminal.app to launch CLI tools for development.",
+            NSAppleEventsUsageDescription:
+                "Claudable needs to control Terminal.app to launch CLI tools for development.",
         },
         afterCopyExtraResources: [
             (buildPath, electronVersion, platform, arch, callback) => {
-                const resourcesPath = path.join(
-                    buildPath,
-                    "Claudecode desktop.app",
-                    "Contents",
-                    "Resources",
-                );
+                let resourcesPath = path.join(buildPath, "resources");
+                if (platform === "darwin") {
+                    resourcesPath = path.join(
+                        buildPath,
+                        "Claudecode desktop.app",
+                        "Contents",
+                        "Resources",
+                    );
+                }
                 fs.renameSync(
                     path.join(resourcesPath, "public"),
                     path.join(

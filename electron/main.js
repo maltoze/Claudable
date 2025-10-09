@@ -111,6 +111,7 @@ async function startNextJS() {
                 cwd: nextPath,
                 stdio: ["ignore", "pipe", "pipe"],
                 env: { ...process.env, PORT: String(NEXT_PORT) },
+                shell: true,
             });
         } else {
             // 生产模式：使用预构建的 standalone 版本
@@ -225,6 +226,7 @@ async function startPythonAPI() {
                     cwd: apiPath,
                     stdio: ["ignore", "pipe", "pipe"],
                     env: { ...process.env },
+                    shell: true,
                 },
             );
         } else {
