@@ -165,7 +165,11 @@ async function startPythonAPI() {
             // 开发模式
             console.log("🐍 Starting FastAPI development server...");
             
-            const venvPython = path.join(apiPath, ".venv", "bin", "python");
+            let venvPython = path.join(apiPath, ".venv", "bin", "python");
+            // Windows 下的虚拟环境路径
+            if (process.platform === "win32") {
+                venvPython = path.join(apiPath, ".venv", "Scripts", "python.exe");
+            }
             const pythonCmd = fs.existsSync(venvPython) ? venvPython : "python";
 
             pythonProcess = spawn(
