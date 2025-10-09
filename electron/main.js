@@ -19,13 +19,9 @@ let mainWindow = null;
 let nextProcess = null;
 let pythonProcess = null;
 let isStarting = false; // 防止重复启动
-let isQuitting = false; // 防止重复退出
 
 const NEXT_PORT = 18273;
 const API_PORT = 18274;
-
-// 存储所有子进程的 PID，用于彻底清理
-const childProcessPids = new Set();
 
 // 确保只有一个应用实例运行
 const gotTheLock = app.requestSingleInstanceLock();
@@ -116,13 +112,7 @@ async function startNextJS() {
                 stdio: ["ignore", "pipe", "pipe"],
                 env: { ...process.env, PORT: String(NEXT_PORT) },
                 shell: true,
-                detached: false, // 确保在同一进程组
             });
-            
-            // 记录进程 PID
-            if (nextProcess.pid) {
-                childProcessPids.add(nextProcess.pid);
-            }
         } else {
             // 生产模式：使用预构建的 standalone 版本
             let standalonePath, serverPath;
@@ -170,13 +160,7 @@ async function startNextJS() {
                     ...process.env,
                     PORT: String(NEXT_PORT),
                 },
-                detached: false, // 确保在同一进程组
             });
-            
-            // 记录进程 PID
-            if (nextProcess.pid) {
-                childProcessPids.add(nextProcess.pid);
-            }
         }
 
         nextProcess.stdout.on("data", (data) => {
@@ -245,15 +229,9 @@ async function startPythonAPI() {
                     cwd: apiPath,
                     stdio: ["ignore", "pipe", "pipe"],
                     env: { ...process.env },
-                    shell: false, // 不使用 shell，直接运行 Python
-                    detached: false, // 确保在同一进程组
+                    shell: true,
                 },
             );
-            
-            // 记录进程 PID
-            if (pythonProcess.pid) {
-                childProcessPids.add(pythonProcess.pid);
-            }
         } else {
             // 生产模式：使用预构建的二进制文件（onedir 模式）
             const platform = process.platform;
@@ -310,13 +288,7 @@ async function startPythonAPI() {
                     PROJECTS_ROOT: projectsRootPath,
                     DATABASE_URL: databaseUrl,
                 },
-                detached: false, // 确保在同一进程组
             });
-            
-            // 记录进程 PID
-            if (pythonProcess.pid) {
-                childProcessPids.add(pythonProcess.pid);
-            }
         }
 
         pythonProcess.stdout.on("data", (data) => {
@@ -608,138 +580,16 @@ app.whenReady().then(async () => {
     }
 });
 
-// 杀死进程及其所有子进程
-async function killProcessTree(pid, signal = 'SIGTERM') {
-    if (!pid) return;
-    
-    try {
-        console.log(`🔪 Killing process tree for PID ${pid} with signal ${signal}`);
-        
-        if (process.platform === 'win32') {
-            // Windows: 使用 taskkill 强制终止进程树
-            const { execSync } = require('child_process');
-            execSync(`taskkill /pid ${pid} /T /F`, { stdio: 'ignore' });
-        } else {
-            // Unix-like: 获取进程组并杀死整个进程组
-            try {
-                // 尝试杀死整个进程组（负PID表示进程组）
-                process.kill(-pid, signal);
-            } catch (e) {
-                // 如果进程组不存在，尝试杀死单个进程
-                try {
-                    process.kill(pid, signal);
-                } catch (err) {
-                    console.log(`⚠️ Process ${pid} might already be dead:`, err.message);
-                }
-            }
-        }
-    } catch (error) {
-        console.log(`⚠️ Failed to kill process ${pid}:`, error.message);
-    }
-}
-
-// 等待进程退出
-async function waitForProcessExit(childProcess, timeout = 5000) {
-    if (!childProcess || !childProcess.pid) {
-        return true;
+function cleanup() {
+    if (nextProcess) {
+        nextProcess.kill("SIGTERM");
+        nextProcess = null;
     }
 
-    return new Promise((resolve) => {
-        const timer = setTimeout(() => {
-            console.log(`⏱️ Process ${childProcess.pid} did not exit in time`);
-            resolve(false);
-        }, timeout);
-
-        childProcess.once('exit', () => {
-            clearTimeout(timer);
-            console.log(`✅ Process ${childProcess.pid} exited successfully`);
-            resolve(true);
-        });
-
-        // 检查进程是否已经退出
-        try {
-            process.kill(childProcess.pid, 0);
-        } catch (e) {
-            // 进程不存在
-            clearTimeout(timer);
-            resolve(true);
-        }
-    });
-}
-
-// 健壮的进程清理函数
-async function cleanup() {
-    if (isQuitting) {
-        console.log('⚠️ Already quitting, skip cleanup');
-        return;
+    if (pythonProcess) {
+        pythonProcess.kill("SIGTERM");
+        pythonProcess = null;
     }
-    isQuitting = true;
-
-    console.log('🧹 Starting cleanup process...');
-
-    const cleanupPromises = [];
-
-    // 清理 Next.js 进程
-    if (nextProcess && nextProcess.pid) {
-        console.log(`🔄 Cleaning up Next.js process (PID: ${nextProcess.pid})`);
-        
-        cleanupPromises.push((async () => {
-            // 1. 先尝试优雅关闭 (SIGTERM)
-            await killProcessTree(nextProcess.pid, 'SIGTERM');
-            
-            // 2. 等待进程退出
-            const exited = await waitForProcessExit(nextProcess, 3000);
-            
-            // 3. 如果没有退出，强制杀死 (SIGKILL)
-            if (!exited && nextProcess.pid) {
-                console.log(`⚠️ Next.js process didn't exit gracefully, force killing...`);
-                await killProcessTree(nextProcess.pid, 'SIGKILL');
-                await waitForProcessExit(nextProcess, 2000);
-            }
-            
-            nextProcess = null;
-        })());
-    }
-
-    // 清理 Python 进程
-    if (pythonProcess && pythonProcess.pid) {
-        console.log(`🔄 Cleaning up Python process (PID: ${pythonProcess.pid})`);
-        
-        cleanupPromises.push((async () => {
-            // 1. 先尝试优雅关闭 (SIGTERM)
-            await killProcessTree(pythonProcess.pid, 'SIGTERM');
-            
-            // 2. 等待进程退出
-            const exited = await waitForProcessExit(pythonProcess, 3000);
-            
-            // 3. 如果没有退出，强制杀死 (SIGKILL)
-            if (!exited && pythonProcess.pid) {
-                console.log(`⚠️ Python process didn't exit gracefully, force killing...`);
-                await killProcessTree(pythonProcess.pid, 'SIGKILL');
-                await waitForProcessExit(pythonProcess, 2000);
-            }
-            
-            pythonProcess = null;
-        })());
-    }
-
-    // 清理所有记录的子进程 PID
-    if (childProcessPids.size > 0) {
-        console.log(`🔄 Cleaning up ${childProcessPids.size} additional child processes`);
-        for (const pid of childProcessPids) {
-            cleanupPromises.push((async () => {
-                await killProcessTree(pid, 'SIGTERM');
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                await killProcessTree(pid, 'SIGKILL');
-            })());
-        }
-        childProcessPids.clear();
-    }
-
-    // 等待所有清理完成
-    await Promise.all(cleanupPromises);
-    
-    console.log('✅ Cleanup completed');
 }
 
 // macOS 特殊处理
@@ -756,36 +606,18 @@ app.on("window-all-closed", () => {
     }
 });
 
-// 在退出前确保清理完成
-app.on("before-quit", async (event) => {
-    if (!isQuitting) {
-        event.preventDefault(); // 阻止默认退出
-        console.log("🔄 Shutting down services...");
-        await cleanup();
-        isQuitting = true;
-        app.quit(); // 清理完成后真正退出
-    }
-});
-
-// 处理系统信号
-const signals = ['SIGINT', 'SIGTERM', 'SIGHUP'];
-signals.forEach(signal => {
-    process.on(signal, async () => {
-        console.log(`📡 Received ${signal}, cleaning up...`);
-        await cleanup();
-        process.exit(0);
-    });
+app.on("before-quit", () => {
+    console.log("🔄 Shutting down services...");
+    cleanup();
 });
 
 // 处理未捕获的异常
-process.on("uncaughtException", async (error) => {
+process.on("uncaughtException", (error) => {
     console.error("Uncaught Exception:", error);
-    await cleanup();
-    process.exit(1);
+    cleanup();
 });
 
-process.on("unhandledRejection", async (reason, promise) => {
+process.on("unhandledRejection", (reason, promise) => {
     console.error("Unhandled Rejection at:", promise, "reason:", reason);
-    await cleanup();
-    process.exit(1);
+    cleanup();
 });
