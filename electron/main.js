@@ -229,7 +229,6 @@ async function startPythonAPI() {
                     cwd: apiPath,
                     stdio: ["ignore", "pipe", "pipe"],
                     env: { ...process.env },
-                    shell: true,
                 },
             );
         } else {
