@@ -9,7 +9,7 @@
   "private": true,
   "homepage": ".",
   "scripts": {
-    "dev": "ELECTRON_IS_DEV=true electron .",
+    "dev": "electron .",
     "start": "electron-forge start",
     "package": "electron-forge package",
     "publish": "electron-forge publish",
@@ -22,7 +22,9 @@
     "build:api": "cd ../apps/api && uv run build_binary.py"
   },
   "dependencies": {
+    "electron-is-dev": "^3.0.1",
     "fix-path": "^3.0.0",
+    "get-port": "^7.1.0",
     "shell-env": "^4.0.1"
   },
   "devDependencies": {
