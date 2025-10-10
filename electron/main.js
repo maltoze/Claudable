@@ -1,9 +1,10 @@
-const { app, BrowserWindow, dialog, shell, ipcMain } = require("electron");
+const { app, BrowserWindow, dialog, shell } = require("electron");
 const { spawn, fork } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 const fixPath = require("fix-path");
 const shellEnv = require("shell-env");
+const { initializeIpcHandlers, cleanupIpcHandlers } = require("./ipc-handlers");
 
 fixPath();
 
@@ -324,137 +325,6 @@ async function startPythonAPI() {
     });
 }
 
-// IPC处理程序 - 执行CLI安装命令
-ipcMain.handle("execute-install-command", async (event, installCommand) => {
-    try {
-        console.log(`🔧 Executing install command: ${installCommand}`);
-
-        return new Promise((resolve, reject) => {
-            const { exec } = require("child_process");
-            
-            let finalCommand = installCommand;
-            
-            // macOS: 使用 AppleScript 请求管理员权限
-            if (process.platform === 'darwin') {
-                const escapedCommand = installCommand.replace(/"/g, '\\"');
-                finalCommand = `osascript -e 'do shell script "${escapedCommand}" with administrator privileges'`;
-                console.log(`🔧 Using AppleScript for sudo on macOS`);
-            }
-
-            // 执行安装命令
-            const childProcess = exec(finalCommand, (error, stdout, stderr) => {
-                if (error) {
-                    console.error(
-                        `❌ Install command failed: ${error.message}`,
-                    );
-                    reject({
-                        success: false,
-                        error: error.message,
-                        stderr: stderr,
-                    });
-                    return;
-                }
-
-                console.log(`✅ Install command completed successfully`);
-                console.log(`stdout: ${stdout}`);
-
-                resolve({
-                    success: true,
-                    stdout: stdout,
-                    stderr: stderr,
-                });
-            });
-
-            // 设置超时时间（5分钟）
-            setTimeout(
-                () => {
-                    childProcess.kill();
-                    reject({
-                        success: false,
-                        error: "Installation timeout (5 minutes)",
-                        stderr: "",
-                    });
-                },
-                5 * 60 * 1000,
-            );
-        });
-    } catch (error) {
-        console.error(`💥 Failed to execute install command: ${error.message}`);
-        return {
-            success: false,
-            error: error.message,
-            stderr: "",
-        };
-    }
-});
-
-// IPC处理程序 - 执行CLI启动命令
-ipcMain.handle("execute-command", async (event, command) => {
-    try {
-        console.log(`🚀 Executing command: ${command}`);
-
-        const { spawn } = require("child_process");
-        
-        // 根据平台选择合适的终端和命令
-        let terminalCommand, terminalArgs;
-        
-        if (process.platform === 'darwin') {
-            // macOS - 使用 AppleScript 启动 Terminal 并执行命令
-            terminalCommand = 'osascript';
-            terminalArgs = [
-                '-e',
-                `tell application "Terminal"
-                    activate
-                    do script "${command}"
-                end tell`
-            ];
-        } else if (process.platform === 'win32') {
-            // Windows - 使用 cmd
-            terminalCommand = 'cmd';
-            terminalArgs = ['/c', 'start', 'cmd', '/k', command];
-        } else {
-            // Linux - 尝试常见的终端
-            const terminals = ['gnome-terminal', 'konsole', 'xterm', 'x-terminal-emulator'];
-            terminalCommand = terminals.find(term => {
-                try {
-                    require('child_process').execSync(`which ${term}`, { stdio: 'ignore' });
-                    return true;
-                } catch {
-                    return false;
-                }
-            }) || 'xterm';
-            
-            if (terminalCommand === 'gnome-terminal') {
-                terminalArgs = ['--', 'bash', '-c', `${command}; exec bash`];
-            } else if (terminalCommand === 'konsole') {
-                terminalArgs = ['-e', 'bash', '-c', `${command}; exec bash`];
-            } else {
-                terminalArgs = ['-e', 'bash', '-c', `${command}; exec bash`];
-            }
-        }
-
-        const childProcess = spawn(terminalCommand, terminalArgs, {
-            detached: true,
-            stdio: 'ignore'
-        });
-
-        childProcess.unref();
-
-        console.log(`✅ Command executed successfully in terminal`);
-        return {
-            success: true,
-            message: "Command executed in terminal"
-        };
-
-    } catch (error) {
-        console.error(`💥 Failed to execute command: ${error.message}`);
-        return {
-            success: false,
-            error: error.message
-        };
-    }
-});
-
 // 创建主窗口
 async function createMainWindow() {
     mainWindow = new BrowserWindow({
@@ -532,6 +402,9 @@ app.whenReady().then(async () => {
     try {
         console.log("🚀 Starting Claudable Electron App...");
 
+        // 初始化 IPC 处理器
+        initializeIpcHandlers();
+
         // 并行启动服务
         const startServices = async () => {
             const nextPromise = startNextJS();
@@ -608,6 +481,7 @@ app.on("window-all-closed", () => {
 app.on("before-quit", () => {
     console.log("🔄 Shutting down services...");
     cleanup();
+    cleanupIpcHandlers();
 });
 
 // 处理未捕获的异常
