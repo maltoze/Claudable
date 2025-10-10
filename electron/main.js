@@ -206,11 +206,16 @@ async function startPythonAPI() {
         if (isDev) {
             // 开发模式：直接运行 Python
             console.log("🐍 Starting FastAPI development server...");
-            
+
             let venvPython = path.join(apiPath, ".venv", "bin", "python");
             // Windows 下的虚拟环境路径
             if (process.platform === "win32") {
-                venvPython = path.join(apiPath, ".venv", "Scripts", "python.exe");
+                venvPython = path.join(
+                    apiPath,
+                    ".venv",
+                    "Scripts",
+                    "python.exe",
+                );
             }
             const pythonCmd = fs.existsSync(venvPython) ? venvPython : "python";
 
@@ -279,7 +284,7 @@ async function startPythonAPI() {
             console.log(`🔍 Database URL: ${databaseUrl}`);
 
             console.log("🐍 Starting FastAPI production server...");
-            pythonProcess = spawn(binaryPath, [], {
+            pythonProcess = spawn(binaryPath, ['-X', 'utf8'], {
                 cwd: path.dirname(binaryPath),
                 stdio: ["ignore", "pipe", "pipe"],
                 env: {
