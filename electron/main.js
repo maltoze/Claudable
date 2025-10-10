@@ -160,6 +160,7 @@ async function startNextJS() {
                 env: {
                     ...process.env,
                     PORT: String(NEXT_PORT),
+                    HOSTNAME: '0.0.0.0'
                 },
             });
         }
