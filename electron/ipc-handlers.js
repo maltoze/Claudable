@@ -192,7 +192,7 @@ async function executeCommand(command) {
         if (process.platform === 'darwin') {
             // macOS: 只有 sudo 命令加管理员权限，brew install 不加
             const escapedCommand = command.replace(/"/g, '\\"').replace(/'/g, "\\'");
-            if (command.includes('npm install')) {
+            if (command.includes('sudo')) {
                 finalCommand = `osascript -e 'do shell script "${escapedCommand}" with administrator privileges'`;
                 console.log(`🔧 Using AppleScript with admin privileges on macOS`);
             } else {
