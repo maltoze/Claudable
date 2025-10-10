@@ -581,12 +581,12 @@ app.whenReady().then(async () => {
 
 function cleanup() {
     if (nextProcess) {
-        nextProcess.kill("SIGTERM");
+        nextProcess.kill("SIGKILL");
         nextProcess = null;
     }
 
     if (pythonProcess) {
-        pythonProcess.kill("SIGTERM");
+        pythonProcess.kill("SIGKILL");
         pythonProcess = null;
     }
 }
