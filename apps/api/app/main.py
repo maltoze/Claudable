@@ -20,6 +20,12 @@ import app.models  # noqa: F401 ensures models are imported for metadata
 from app.db.session import engine
 from app.db.migrations import run_sqlite_migrations
 import os
+import sys
+import io
+
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 configure_logging()
 
