@@ -18,22 +18,22 @@ const CLI_OPTIONS = [
     {
         id: "claude",
         installCommand:
-            "npm install -g @anthropic-ai/claude-code && npm install -g @musistudio/claude-code-router",
+            "sudo npm install -g @anthropic-ai/claude-code && sudo npm install -g @musistudio/claude-code-router",
         launchCommand: "claude",
     },
     {
         id: "qwen",
-        installCommand: "npm install -g @qwen-code/qwen-code@latest",
+        installCommand: "sudo npm install -g @qwen-code/qwen-code@latest",
         launchCommand: "qwen",
     },
     {
         id: "gemini",
-        installCommand: "npm install -g @google/gemini-cli",
+        installCommand: "sudo npm install -g @google/gemini-cli",
         launchCommand: "gemini",
     },
     {
         id: "codex",
-        installCommand: "npm install -g @openai/codex",
+        installCommand: "sudo npm install -g @openai/codex",
         launchCommand: "codex",
     },
 ];
