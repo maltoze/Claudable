@@ -37,11 +37,11 @@ def scaffold_nextjs_minimal(repo_path: str) -> None:
     import subprocess
     import tempfile
     import shutil
-    
+
     # Get parent directory to create project in
     parent_dir = Path(repo_path).parent
     project_name = Path(repo_path).name
-    
+
     try:
         npx_available = any(
             shutil.which(candidate)
@@ -58,13 +58,14 @@ def scaffold_nextjs_minimal(repo_path: str) -> None:
             "create-next-app@latest", 
             project_name,
             "--typescript",
-            "--tailwind", 
+            "--tailwind",
             "--eslint",
             "--app",
-            "--import-alias", "@/*",
+            "--import-alias",
+            "@/*",
             "--use-npm",
             "--skip-install",  # We'll install dependencies later (handled by backend)
-            "--yes"            # Auto-accept all prompts
+            "--yes",  # Auto-accept all prompts
         ]
         if os.name == "nt":
             cmd = ["cmd.exe", "/c"] + base_cmd
@@ -74,36 +75,40 @@ def scaffold_nextjs_minimal(repo_path: str) -> None:
         # Set environment for non-interactive mode
         env = os.environ.copy()
         env["CI"] = "true"  # Force non-interactive mode
-        
+
         from app.core.terminal_ui import ui
+
         ui.info(f"Running create-next-app with command: {' '.join(cmd)}", "Filesystem")
-        
+
         # Run create-next-app in the parent directory with timeout
         result = subprocess.run(
-            cmd, 
-            cwd=parent_dir, 
-            check=True, 
-            capture_output=True, 
+            cmd,
+            cwd=parent_dir,
+            check=True,
+            capture_output=True,
             text=True,
             env=env,
-            timeout=300  # 5 minute timeout
+            timeout=300,  # 5 minute timeout
+            shell=os.name == "nt",
         )
-        
+
         ui.success(f"Created Next.js app: {result.stdout}", "Filesystem")
-        
+
         # Skip npm install for faster project creation
         # Users can run 'npm install' manually when needed
         ui.info("Skipped dependency installation for faster setup", "Filesystem")
-        
+
     except subprocess.TimeoutExpired as e:
         ui.error("create-next-app timed out after 5 minutes", "Filesystem")
-        raise Exception(f"Project creation timed out. This might be due to slow network or hung process.")
+        raise Exception(
+            f"Project creation timed out. This might be due to slow network or hung process."
+        )
     except subprocess.CalledProcessError as e:
         ui.error(f"Error creating Next.js app: {e}", "Filesystem")
         ui.debug(f"Command: {' '.join(cmd)}", "Filesystem")
         ui.debug(f"stdout: {e.stdout}", "Filesystem")
         ui.debug(f"stderr: {e.stderr}", "Filesystem")
-        
+
         # Provide more specific error messages
         stderr_lower = (e.stderr or "").lower()
         if "is not recognized" in stderr_lower or "command not found" in stderr_lower:

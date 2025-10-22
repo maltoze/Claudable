@@ -293,6 +293,7 @@ async function startPythonAPI() {
                     PORT: String(API_PORT),
                     PROJECTS_ROOT: projectsRootPath,
                     DATABASE_URL: databaseUrl,
+                    PYTHONIOENCODING: 'utf-8',
                 },
             });
         }

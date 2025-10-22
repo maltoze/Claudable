@@ -395,7 +395,8 @@ def start_preview_process(project_id: str, repo_path: str, port: Optional[int] =
                 env=env,
                 capture_output=True,
                 text=True,
-                timeout=120  # 2 minutes timeout for npm install
+                timeout=120,  # 2 minutes timeout for npm install
+                shell=os.name == "nt"
             )
             
             if install_result.returncode != 0:
@@ -507,7 +508,8 @@ def stop_preview_process(project_id: str, cleanup_cache: bool = False) -> None:
                     [npm_cmd, "cache", "clean", "--force"],
                     cwd=repo_path,
                     capture_output=True,
-                    timeout=30
+                    timeout=30,
+                    shell=os.name == "nt"
                 )
                 print(f"Cleaned npm cache for project {project_id}")
         except Exception as e:
