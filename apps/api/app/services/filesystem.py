@@ -12,7 +12,9 @@ def ensure_dir(path: str) -> None:
 def init_git_repo(repo_path: str) -> None:
     from app.core.terminal_ui import ui
 
-    git_cmd = shutil.which("git.exe" if os.name == "nt" else "git") or shutil.which("git")
+    git_cmd = shutil.which("git.exe" if os.name == "nt" else "git") or shutil.which(
+        "git"
+    )
     if not git_cmd:
         raise Exception(
             "Git is not available on the PATH. Please install Git and ensure the 'git' command is accessible."
@@ -21,7 +23,20 @@ def init_git_repo(repo_path: str) -> None:
     try:
         subprocess.run([git_cmd, "init"], cwd=repo_path, check=True)
         subprocess.run([git_cmd, "add", "-A"], cwd=repo_path, check=True)
-        subprocess.run([git_cmd, "commit", "-m", "Initial commit"], cwd=repo_path, check=True)
+        subprocess.run(
+            [
+                git_cmd,
+                "commit",
+                "-c",
+                "user.name=Claudable",
+                "-c",
+                "user.email=claudable@claudable.com",
+                "-m",
+                "Initial commit",
+            ],
+            cwd=repo_path,
+            check=True,
+        )
     except FileNotFoundError as e:
         ui.error(f"Git command not found: {e}", "Filesystem")
         raise Exception(
@@ -55,7 +70,7 @@ def scaffold_nextjs_minimal(repo_path: str) -> None:
         # Create Next.js app with TypeScript and Tailwind CSS
         base_cmd = [
             "npx",
-            "create-next-app@latest", 
+            "create-next-app@latest",
             project_name,
             "--typescript",
             "--tailwind",
@@ -71,7 +86,7 @@ def scaffold_nextjs_minimal(repo_path: str) -> None:
             cmd = ["cmd.exe", "/c"] + base_cmd
         else:
             cmd = base_cmd
-        
+
         # Set environment for non-interactive mode
         env = os.environ.copy()
         env["CI"] = "true"  # Force non-interactive mode
@@ -112,15 +127,21 @@ def scaffold_nextjs_minimal(repo_path: str) -> None:
         # Provide more specific error messages
         stderr_lower = (e.stderr or "").lower()
         if "is not recognized" in stderr_lower or "command not found" in stderr_lower:
-            error_msg = "Cannot execute 'npx'. Install Node.js 18+ and ensure npx is on PATH."
+            error_msg = (
+                "Cannot execute 'npx'. Install Node.js 18+ and ensure npx is on PATH."
+            )
         elif "eacces" in stderr_lower:
             error_msg = "Permission denied. Please check directory permissions."
         elif "enoent" in stderr_lower:
-            error_msg = "Command not found. Please ensure Node.js and npm are installed."
+            error_msg = (
+                "Command not found. Please ensure Node.js and npm are installed."
+            )
         elif "network" in stderr_lower:
             error_msg = "Network error. Please check your internet connection."
         else:
-            error_msg = f"Failed to create Next.js project: {e.stderr or e.stdout or str(e)}"
+            error_msg = (
+                f"Failed to create Next.js project: {e.stderr or e.stdout or str(e)}"
+            )
 
         raise Exception(error_msg)
     except FileNotFoundError as e:
