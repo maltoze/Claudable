@@ -415,7 +415,9 @@ def start_preview_process(project_id: str, repo_path: str, port: Optional[int] =
             env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
+            encoding='utf-8',
             text=True,
+            errors='replace',
         )
         if os.name == 'posix':
             popen_kwargs["preexec_fn"] = os.setsid  # Unix: new process group
