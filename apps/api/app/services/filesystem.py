@@ -26,11 +26,27 @@ def init_git_repo(repo_path: str) -> None:
         subprocess.run(
             [
                 git_cmd,
+                "config",
+                "user.email",
+                "claudable@claudable.com",
+            ],
+            cwd=repo_path,
+            check=True,
+        )
+        subprocess.run(
+            [
+                git_cmd,
+                "config",
+                "user.name",
+                "Claudable",
+            ],
+            cwd=repo_path,
+            check=True,
+        )
+        subprocess.run(
+            [
+                git_cmd,
                 "commit",
-                "-c",
-                "user.name=Claudable",
-                "-c",
-                "user.email=claudable@claudable.com",
                 "-m",
                 "Initial commit",
             ],
