@@ -78,6 +78,11 @@ module.exports = {
             name: "@electron-forge/maker-squirrel",
             config: {
                 name: "claudable",
+                exe: "Claudecode desktop.exe",
+                setupExe: "Claudecode-desktop-Setup.exe",
+                setupIcon: "../assets/icon.ico",
+                skipUpdateIcon: false,
+                skipUpdateBinary: false,
             },
         },
         {

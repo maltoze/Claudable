@@ -24,6 +24,56 @@ let isStarting = false; // 防止重复启动
 const NEXT_PORT = 18273;
 const API_PORT = 18274;
 
+// Squirrel 事件处理（Windows 安装程序）
+if (process.platform === "win32") {
+    const squirrelCommand = process.argv[1];
+    const exePath = path.resolve(process.execPath, "..");
+    const rootAtomFolder = path.resolve(exePath, "..");
+    const updateDotExe = path.join(rootAtomFolder, "Update.exe");
+    const appFileName = "Claudecode desktop.exe";
+    const createShortcut = path.join(rootAtomFolder, "resources\\Update.exe");
+
+    const handleSquirrelEvent = (command) => {
+        switch (command) {
+            case "--squirrel-install":
+            case "--squirrel-updated":
+                // 创建开始菜单快捷方式
+                try {
+                    if (fs.existsSync(updateDotExe)) {
+                        require("child_process").execFile(updateDotExe, [
+                            "--createShortcut",
+                            appFileName,
+                        ]);
+                    }
+                } catch (e) {
+                    console.log("快捷方式创建失败:", e);
+                }
+                return true;
+            case "--squirrel-uninstall":
+                // 删除开始菜单快捷方式
+                try {
+                    if (fs.existsSync(updateDotExe)) {
+                        require("child_process").execFile(updateDotExe, [
+                            "--removeShortcut",
+                            appFileName,
+                        ]);
+                    }
+                } catch (e) {
+                    console.log("快捷方式删除失败:", e);
+                }
+                return true;
+            case "--squirrel-obsolete":
+            case "--squirrel-firstrun":
+                return true;
+        }
+        return false;
+    };
+
+    if (handleSquirrelEvent(squirrelCommand)) {
+        app.quit();
+    }
+}
+
 // 确保只有一个应用实例运行
 const gotTheLock = app.requestSingleInstanceLock();
 
