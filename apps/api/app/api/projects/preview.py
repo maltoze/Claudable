@@ -215,6 +215,16 @@ async def restart_preview(
                 detail="Project repository is not initialized yet. Please wait for project setup to complete."
             )
 
+    # Clean lock files before restart
+    import shutil
+    next_dir = os.path.join(repo_path, ".next")
+    try:
+        if os.path.exists(next_dir):
+            shutil.rmtree(next_dir, ignore_errors=True)
+            print(f"Cleaned .next directory for restart")
+    except Exception as e:
+        print(f"Warning: Could not clean .next directory: {e}")
+
     # Start preview
     process_name, port = start_preview_process(project_id, repo_path, port=body.port)
     result = {
@@ -230,6 +240,7 @@ async def restart_preview(
     # Update project status
     project.status = "preview_running"
     project.preview_url = result.get("url")
+    project.preview_port = result.get("port")
     db.commit()
     
     return PreviewStatusResponse(
@@ -238,20 +249,3 @@ async def restart_preview(
         url=result.get("url"),
         process_id=result.get("process_id")
     )
-
-
-@router.get("/{project_id}/error-logs")
-async def get_all_error_logs(
-    project_id: str,
-    db: Session = Depends(get_db)
-):
-    """Get all error logs from the preview process"""
-    
-    project = db.get(ProjectModel, project_id)
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-    
-    # Get all stored logs for this project
-    all_logs = get_all_preview_logs(project_id)
-    
-    return {"logs": all_logs, "project_id": project_id}

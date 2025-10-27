@@ -334,6 +334,24 @@ def start_preview_process(project_id: str, repo_path: str, port: Optional[int] =
         _process_logs[project_id] = []
         print(f"[PreviewError] Cleared previous logs for {project_id}")
     
+    # Clean up stale lock files and .next directory
+    next_dir = os.path.join(repo_path, ".next")
+    dev_lock = os.path.join(next_dir, "dev", "lock")
+    if os.path.exists(dev_lock):
+        try:
+            os.remove(dev_lock)
+            print(f"Cleaned up stale .next/dev/lock file")
+        except Exception as e:
+            print(f"Warning: Could not remove lock file: {e}")
+    
+    # Also clean .next directory if it exists to avoid lock conflicts
+    try:
+        if os.path.exists(next_dir):
+            shutil.rmtree(next_dir, ignore_errors=True)
+            print(f"Cleaned up .next directory to prevent lock conflicts")
+    except Exception as e:
+        print(f"Warning: Could not clean .next directory: {e}")
+    
     # Assign port
     port = port or find_free_preview_port()
     process_name = f"next-dev-{project_id}"
