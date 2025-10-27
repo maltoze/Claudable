@@ -24,6 +24,8 @@ let isStarting = false; // 防止重复启动
 const NEXT_PORT = 18273;
 const API_PORT = 18274;
 
+if (require("electron-squirrel-startup")) app.quit();
+
 // Squirrel 事件处理（Windows 安装程序）
 if (process.platform === "win32") {
     const squirrelCommand = process.argv[1];
@@ -209,7 +211,7 @@ async function startNextJS() {
                 env: {
                     ...process.env,
                     PORT: String(NEXT_PORT),
-                    HOSTNAME: '0.0.0.0'
+                    HOSTNAME: "0.0.0.0",
                 },
             });
         }
@@ -334,7 +336,7 @@ async function startPythonAPI() {
             console.log(`🔍 Database URL: ${databaseUrl}`);
 
             console.log("🐍 Starting FastAPI production server...");
-            pythonProcess = spawn(binaryPath, ['-X', 'utf8'], {
+            pythonProcess = spawn(binaryPath, ["-X", "utf8"], {
                 cwd: path.dirname(binaryPath),
                 stdio: ["ignore", "pipe", "pipe"],
                 env: {
@@ -342,7 +344,7 @@ async function startPythonAPI() {
                     PORT: String(API_PORT),
                     PROJECTS_ROOT: projectsRootPath,
                     DATABASE_URL: databaseUrl,
-                    PYTHONIOENCODING: 'utf8',
+                    PYTHONIOENCODING: "utf8",
                 },
             });
         }
