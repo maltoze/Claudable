@@ -31,7 +31,6 @@ if (process.platform === "win32") {
     const rootAtomFolder = path.resolve(exePath, "..");
     const updateDotExe = path.join(rootAtomFolder, "Update.exe");
     const appFileName = "Claudecode desktop.exe";
-    const createShortcut = path.join(rootAtomFolder, "resources\\Update.exe");
 
     const handleSquirrelEvent = (command) => {
         switch (command) {
