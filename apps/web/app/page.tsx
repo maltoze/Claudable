@@ -516,6 +516,26 @@ export default function HomePage() {
   const handleSubmit = async () => {
     if ((!prompt.trim() && uploadedImages.length === 0) || isCreatingProject) return;
     
+    // Check if running in Electron and if token exists in safeStorage
+    if (typeof window !== 'undefined' && (window as any).electronAPI?.safeStorage) {
+      try {
+        const hasToken = await (window as any).electronAPI.safeStorage.getItem('token');
+        if (!hasToken) {
+          // No token found, open login URL with origin URL parameter
+          const loginBaseUrl = process.env.NEXT_PUBLIC_LOGIN_BASE_URL;
+          const originUrl = 'claudable://app/callback';
+          
+          if (loginBaseUrl && (window as any).electronAPI?.shell?.openExternal) {
+            const loginUrlWithOrigin = `${loginBaseUrl}${loginBaseUrl.includes('?') ? '&' : '?'}originUrl=${encodeURIComponent(originUrl)}`;
+            await (window as any).electronAPI.shell.openExternal(loginUrlWithOrigin);
+          }
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking token from safeStorage:', error);
+      }
+    }
+    
     setIsCreatingProject(true);
     
     // Generate a unique project ID

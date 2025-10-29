@@ -4,7 +4,7 @@ const path = require("path");
 const fs = require("fs");
 const fixPath = require("fix-path");
 const shellEnv = require("shell-env");
-const { initializeIpcHandlers, cleanupIpcHandlers } = require("./ipc-handlers");
+const { initializeIpcHandlers, cleanupIpcHandlers, safeStorageSet } = require("./ipc-handlers");
 
 fixPath();
 
@@ -459,6 +459,40 @@ app.whenReady().then(async () => {
 
     try {
         console.log("🚀 Starting Claudable Electron App...");
+
+        // 注册 claudable:// protocol 处理
+        app.setAsDefaultProtocolClient('claudable');
+
+        // 处理 claudable:// URL 协议
+        app.on('open-url', (event, url) => {
+            event.preventDefault();
+            console.log('🔗 Opening URL:', url);
+            
+            // 解析 URL: claudable://app/callback?token=xxx
+            try {
+                const urlObj = new URL(url);
+                const token = urlObj.searchParams.get('token');
+                
+                if (token && mainWindow) {
+                    console.log('🔑 Token received from login, saving...');
+                    // 直接在主进程中保存 token
+                    const saveSuccess = safeStorageSet('token', token);
+                    
+                    if (saveSuccess) {
+                        console.log('✅ Token saved to storage');
+                        // 然后通知渲染进程
+                        mainWindow.webContents.send('auth-token-received', { token });
+                        // 聚焦窗口
+                        if (mainWindow.isMinimized()) mainWindow.restore();
+                        mainWindow.focus();
+                    } else {
+                        console.error('❌ Failed to save token');
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to parse protocol URL:', error);
+            }
+        });
 
         // 初始化 IPC 处理器
         initializeIpcHandlers();

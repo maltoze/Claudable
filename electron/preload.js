@@ -8,6 +8,30 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 执行启动命令
   executeCommand: (command) => ipcRenderer.invoke('execute-command', command),
   
+  // safeStorage API
+  safeStorage: {
+    getItem: (key) => ipcRenderer.invoke('safe-storage-get', key),
+    setItem: (key, value) => ipcRenderer.invoke('safe-storage-set', key, value),
+    removeItem: (key) => ipcRenderer.invoke('safe-storage-remove', key),
+  },
+  
+  // shell API - 打开外部URL
+  shell: {
+    openExternal: (url) => ipcRenderer.invoke('shell-open-external', url),
+  },
+
+  // 监听认证 token 事件
+  onAuthTokenReceived: (callback) => {
+    ipcRenderer.on('auth-token-received', (event, data) => {
+      callback(data);
+    });
+  },
+
+  // 移除监听
+  offAuthTokenReceived: () => {
+    ipcRenderer.removeAllListeners('auth-token-received');
+  },
+  
   // 检测是否在electron环境中
   isElectron: true,
   

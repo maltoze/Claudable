@@ -1,5 +1,43 @@
 const { ipcMain } = require("electron");
 const { spawn, exec } = require("child_process");
+const { safeStorage, shell, app } = require("electron");
+const path = require("path");
+const fs = require("fs");
+
+// 数据存储路径
+const dataPath = path.join(app.getPath("userData"), "data");
+const storageFile = path.join(dataPath, "secure-storage.json");
+
+// 确保数据目录存在
+function ensureDataDir() {
+    if (!fs.existsSync(dataPath)) {
+        fs.mkdirSync(dataPath, { recursive: true });
+    }
+}
+
+// 读取存储数据
+function readStorage() {
+    try {
+        if (!fs.existsSync(storageFile)) {
+            return {};
+        }
+        const data = fs.readFileSync(storageFile, 'utf-8');
+        return JSON.parse(data);
+    } catch (error) {
+        console.error('Error reading storage:', error);
+        return {};
+    }
+}
+
+// 写入存储数据
+function writeStorage(data) {
+    try {
+        ensureDataDir();
+        fs.writeFileSync(storageFile, JSON.stringify(data, null, 2), 'utf-8');
+    } catch (error) {
+        console.error('Error writing storage:', error);
+    }
+}
 
 /**
  * 初始化所有 IPC 处理器
@@ -10,6 +48,8 @@ function initializeIpcHandlers() {
     // 注册所有 IPC 处理器
     registerInstallCommandHandler();
     registerExecuteCommandHandler();
+    registerSafeStorageHandlers();
+    registerShellHandlers();
     
     console.log("✅ IPC handlers initialized successfully");
 }
@@ -339,11 +379,134 @@ function cleanupIpcHandlers() {
     // 移除所有注册的处理器
     ipcMain.removeAllListeners("execute-install-command");
     ipcMain.removeAllListeners("execute-command");
+    ipcMain.removeAllListeners("safe-storage-get");
+    ipcMain.removeAllListeners("safe-storage-set");
+    ipcMain.removeAllListeners("safe-storage-remove");
+    ipcMain.removeAllListeners("shell-open-external");
     
     console.log("✅ IPC handlers cleaned up");
 }
 
+/**
+ * safeStorage 处理器 - 用于安全存储敏感数据
+ */
+function registerSafeStorageHandlers() {
+    // 获取数据
+    ipcMain.handle("safe-storage-get", async (event, key) => {
+        try {
+            const storage = readStorage();
+            const encryptedData = storage[key];
+            
+            if (!encryptedData) {
+                console.log(`🔍 Key "${key}" not found in storage`);
+                return null;
+            }
+            
+            // 使用 Electron 的 safeStorage 解密数据
+            const decrypted = safeStorage.decryptString(Buffer.from(encryptedData, 'base64'));
+            console.log(`✅ Successfully decrypted key "${key}"`);
+            return decrypted;
+        } catch (error) {
+            console.error(`❌ Failed to get item from safeStorage: ${error.message}`);
+            return null;
+        }
+    });
+
+    // 设置数据
+    ipcMain.handle("safe-storage-set", async (event, key, value) => {
+        try {
+            ensureDataDir();
+            const storage = readStorage();
+            
+            // 使用 Electron 的 safeStorage 加密数据
+            const encrypted = safeStorage.encryptString(value);
+            storage[key] = encrypted.toString('base64');
+            
+            writeStorage(storage);
+            console.log(`✅ Successfully encrypted and stored key "${key}"`);
+            return true;
+        } catch (error) {
+            console.error(`❌ Failed to set item in safeStorage: ${error.message}`);
+            return false;
+        }
+    });
+
+    // 删除数据
+    ipcMain.handle("safe-storage-remove", async (event, key) => {
+        try {
+            const storage = readStorage();
+            delete storage[key];
+            writeStorage(storage);
+            console.log(`✅ Successfully removed key "${key}"`);
+            return true;
+        } catch (error) {
+            console.error(`❌ Failed to remove item from safeStorage: ${error.message}`);
+            return false;
+        }
+    });
+}
+
+/**
+ * Shell 处理器 - 用于打开外部应用和URL
+ */
+function registerShellHandlers() {
+    ipcMain.handle("shell-open-external", async (event, url) => {
+        try {
+            await shell.openExternal(url);
+            return { success: true };
+        } catch (error) {
+            console.error(`❌ Failed to open external URL: ${error.message}`);
+            return { success: false, error: error.message };
+        }
+    });
+}
+
 module.exports = {
     initializeIpcHandlers,
-    cleanupIpcHandlers
+    cleanupIpcHandlers,
+    // 导出存储函数供主进程使用
+    safeStorageGet: (key) => {
+        try {
+            const storage = readStorage();
+            const encryptedData = storage[key];
+            
+            if (!encryptedData) {
+                return null;
+            }
+            
+            const decrypted = safeStorage.decryptString(Buffer.from(encryptedData, 'base64'));
+            return decrypted;
+        } catch (error) {
+            console.error(`❌ Failed to get item from safeStorage: ${error.message}`);
+            return null;
+        }
+    },
+    safeStorageSet: (key, value) => {
+        try {
+            ensureDataDir();
+            const storage = readStorage();
+            
+            const encrypted = safeStorage.encryptString(value);
+            storage[key] = encrypted.toString('base64');
+            
+            writeStorage(storage);
+            console.log(`✅ Successfully encrypted and stored key "${key}"`);
+            return true;
+        } catch (error) {
+            console.error(`❌ Failed to set item in safeStorage: ${error.message}`);
+            return false;
+        }
+    },
+    safeStorageRemove: (key) => {
+        try {
+            const storage = readStorage();
+            delete storage[key];
+            writeStorage(storage);
+            console.log(`✅ Successfully removed key "${key}"`);
+            return true;
+        } catch (error) {
+            console.error(`❌ Failed to remove item from safeStorage: ${error.message}`);
+            return false;
+        }
+    }
 };
