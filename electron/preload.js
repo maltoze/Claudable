@@ -20,6 +20,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openExternal: (url) => ipcRenderer.invoke('shell-open-external', url),
   },
 
+  // 配置文件 API
+  updateConfigFile: (options) => ipcRenderer.invoke('update-config-file', options),
+
   // 监听认证 token 事件
   onAuthTokenReceived: (callback) => {
     ipcRenderer.on('auth-token-received', (event, data) => {

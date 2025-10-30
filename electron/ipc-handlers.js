@@ -50,6 +50,7 @@ function initializeIpcHandlers() {
     registerExecuteCommandHandler();
     registerSafeStorageHandlers();
     registerShellHandlers();
+    registerConfigFileHandlers();
     
     console.log("✅ IPC handlers initialized successfully");
 }
@@ -383,6 +384,7 @@ function cleanupIpcHandlers() {
     ipcMain.removeAllListeners("safe-storage-set");
     ipcMain.removeAllListeners("safe-storage-remove");
     ipcMain.removeAllListeners("shell-open-external");
+    ipcMain.removeAllListeners("update-config-file");
     
     console.log("✅ IPC handlers cleaned up");
 }
@@ -456,6 +458,60 @@ function registerShellHandlers() {
             return { success: true };
         } catch (error) {
             console.error(`❌ Failed to open external URL: ${error.message}`);
+            return { success: false, error: error.message };
+        }
+    });
+}
+
+/**
+ * 配置文件处理器 - 用于更新 Claude Code Router 配置
+ */
+function registerConfigFileHandlers() {
+    ipcMain.handle("update-config-file", async (event, options) => {
+        try {
+            const { configPath, content } = options;
+            
+            if (!configPath || !content) {
+                return { success: false, error: "Missing configPath or content" };
+            }
+
+            // 展开 ~ 为用户主目录
+            const expandedPath = configPath.replace('~', app.getPath('home'));
+            const dirPath = path.dirname(expandedPath);
+
+            // 确保目录存在
+            if (!fs.existsSync(dirPath)) {
+                fs.mkdirSync(dirPath, { recursive: true });
+                console.log(`📁 Created directory: ${dirPath}`);
+            }
+
+            // 写入配置文件
+            fs.writeFileSync(expandedPath, content, 'utf-8');
+            console.log(`✅ Config file updated: ${expandedPath}`);
+
+            // 执行 ccr restart 命令重启 Claude Code Router
+            try {
+                await new Promise((resolve, reject) => {
+                    exec('ccr restart', (error, stdout, stderr) => {
+                        if (error) {
+                            console.warn(`⚠️ Warning: ccr restart failed: ${error.message}`);
+                            // 不要 reject，因为 ccr 可能未安装，但配置文件更新成功了
+                            resolve();
+                        } else {
+                            console.log(`✅ CCR restarted successfully`);
+                            console.log(stdout);
+                            resolve();
+                        }
+                    });
+                });
+            } catch (restartError) {
+                console.warn(`⚠️ Warning: Failed to restart CCR: ${restartError.message}`);
+                // 不中断主流程，因为配置文件已经更新成功了
+            }
+
+            return { success: true, path: expandedPath };
+        } catch (error) {
+            console.error(`❌ Failed to update config file: ${error.message}`);
             return { success: false, error: error.message };
         }
     });

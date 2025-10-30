@@ -6,6 +6,7 @@ import CreateProjectModal from '@/components/CreateProjectModal';
 import DeleteProjectModal from '@/components/DeleteProjectModal';
 import GlobalSettings from '@/components/GlobalSettings';
 import { useGlobalSettings } from '@/contexts/GlobalSettingsContext';
+import { handleTokenReceived, getToken, removeToken, openLoginPage } from '@/lib/auth';
 import Image from 'next/image';
 import { Image as ImageIcon } from 'lucide-react';
 
@@ -82,6 +83,8 @@ export default function HomePage() {
   const [cliStatus, setCLIStatus] = useState<{ [key: string]: { installed: boolean; checking: boolean; version?: string; error?: string; } }>({});
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [claudeInstalled, setClaudeInstalled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   
   // Define models for each assistant statically
   const modelsByAssistant = {
@@ -112,6 +115,64 @@ export default function HomePage() {
   // Sync with Global Settings (until user overrides locally)
   const { settings: globalSettings } = useGlobalSettings();
   
+  // 检查初始认证状态
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        const token = await getToken();
+        setIsLoggedIn(!!token);
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+        setIsLoggedIn(false);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
+
+  // 处理登出
+  const handleLogout = async () => {
+    try {
+      const success = await removeToken();
+      if (success) {
+        setIsLoggedIn(false);
+        showToast('Logged out successfully', 'success');
+      } else {
+        showToast('Failed to logout', 'error');
+      }
+    } catch (error) {
+      console.error('Error logging out:', error);
+      showToast('Error during logout', 'error');
+    }
+  };
+
+  // 处理登录
+  const handleLogin = () => {
+    openLoginPage();
+  };
+
+  // 监听 Electron auth token 事件
+  useEffect(() => {
+    if (typeof window === 'undefined' || !(window as any).electronAPI?.onAuthTokenReceived) {
+      return;
+    }
+
+    const handleTokenEvent = async (data: { token: string }) => {
+      console.log('🔔 Auth token received event');
+      setIsLoggedIn(true);
+      await handleTokenReceived(data.token);
+    };
+
+    (window as any).electronAPI.onAuthTokenReceived(handleTokenEvent);
+
+    // Cleanup: remove listener on unmount
+    return () => {
+      (window as any).electronAPI?.offAuthTokenReceived?.();
+    };
+  }, []);
+
   // Check if this is a fresh page load (not navigation)
   useEffect(() => {
     const isPageRefresh = !sessionStorage.getItem('navigationFlag');
@@ -1031,8 +1092,31 @@ export default function HomePage() {
       </div>
       
       {/* Main Content - Not affected by sidebar */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex flex-col min-w-0 relative">
+        <div className="flex-1 flex items-center justify-center p-8 relative">
+          {/* Auth buttons - top right */}
+          <div className="absolute top-8 right-8 flex items-center gap-2">
+            {isCheckingAuth ? (
+              <div className="px-4 py-2">
+                <div className="w-4 h-4 border-2 border-gray-300 dark:border-gray-600 border-t-orange-500 rounded-full animate-spin"></div>
+              </div>
+            ) : isLoggedIn ? (
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium text-sm"
+              >
+                Logout
+              </button>
+            ) : (
+              <button
+                onClick={handleLogin}
+                className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors font-medium text-sm"
+              >
+                Login
+              </button>
+            )}
+          </div>
+
           <div className="w-full max-w-4xl">
             <div className="text-center mb-12">
               <div className="flex justify-center mb-6">
