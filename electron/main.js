@@ -24,7 +24,15 @@ let isStarting = false; // 防止重复启动
 const NEXT_PORT = 18273;
 const API_PORT = 18274;
 
-if (require("electron-squirrel-startup")) app.quit();
+// Handle electron-squirrel-startup (Windows only)
+try {
+    if (require("electron-squirrel-startup")) app.quit();
+} catch (e) {
+    // Module not found - this is expected on non-Windows platforms
+    if (!e.message.includes("Cannot find module")) {
+        throw e;
+    }
+}
 
 // Squirrel 事件处理（Windows 安装程序）
 if (process.platform === "win32") {
