@@ -4,7 +4,13 @@ const path = require("path");
 const fs = require("fs");
 const fixPath = require("fix-path");
 const shellEnv = require("shell-env");
-const { initializeIpcHandlers, cleanupIpcHandlers, safeStorageSet } = require("./ipc-handlers");
+const { initializeIpcHandlers, cleanupIpcHandlers } = require("./ipc-handlers");
+const {
+    setMainWindow,
+    handleProtocolURL,
+    registerProtocolHandlers,
+    handleStartupProtocolURL,
+} = require("./protocol-handler");
 
 fixPath();
 
@@ -90,10 +96,19 @@ if (!gotTheLock) {
     app.quit();
 } else {
     app.on("second-instance", (event, commandLine, workingDirectory) => {
+        console.log('🔗 Second instance triggered with args:', commandLine);
+        
         // 当运行第二个实例时，将会聚焦到 mainWindow 这个窗口
         if (mainWindow) {
             if (mainWindow.isMinimized()) mainWindow.restore();
             mainWindow.focus();
+        }
+        
+        // 处理 Windows 上通过 protocol 传入的 URL
+        const protocolUrl = commandLine.find(arg => arg.startsWith('claudable://'));
+        if (protocolUrl) {
+            console.log('🔗 Protocol URL from second instance:', protocolUrl);
+            handleProtocolURL(protocolUrl);
         }
     });
 }
@@ -452,6 +467,9 @@ async function createMainWindow() {
     mainWindow.on("closed", () => {
         mainWindow = null;
     });
+    
+    // 设置 protocol handler 的 mainWindow 引用
+    setMainWindow(mainWindow);
 }
 
 // 应用启动
@@ -468,39 +486,11 @@ app.whenReady().then(async () => {
     try {
         console.log("🚀 Starting Claudable Electron App...");
 
-        // 注册 claudable:// protocol 处理
-        app.setAsDefaultProtocolClient('claudable');
+        // 注册 protocol 处理器
+        registerProtocolHandlers(app);
 
-        // 处理 claudable:// URL 协议
-        app.on('open-url', (event, url) => {
-            event.preventDefault();
-            console.log('🔗 Opening URL:', url);
-            
-            // 解析 URL: claudable://app/callback?token=xxx
-            try {
-                const urlObj = new URL(url);
-                const token = urlObj.searchParams.get('token');
-                
-                if (token && mainWindow) {
-                    console.log('🔑 Token received from login, saving...');
-                    // 直接在主进程中保存 token
-                    const saveSuccess = safeStorageSet('token', token);
-                    
-                    if (saveSuccess) {
-                        console.log('✅ Token saved to storage');
-                        // 然后通知渲染进程
-                        mainWindow.webContents.send('auth-token-received', { token });
-                        // 聚焦窗口
-                        if (mainWindow.isMinimized()) mainWindow.restore();
-                        mainWindow.focus();
-                    } else {
-                        console.error('❌ Failed to save token');
-                    }
-                }
-            } catch (error) {
-                console.error('Failed to parse protocol URL:', error);
-            }
-        });
+        // Windows 平台：处理通过命令行参数传递的 URL
+        handleStartupProtocolURL(process.argv);
 
         // 初始化 IPC 处理器
         initializeIpcHandlers();
