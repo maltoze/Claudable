@@ -595,6 +595,7 @@ export default function HomePage() {
       } catch (error) {
         console.error('Error checking token from safeStorage:', error);
       }
+
     }
     
     setIsCreatingProject(true);

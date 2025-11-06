@@ -3,6 +3,8 @@ import 'highlight.js/styles/github-dark.css'
 import ThemeProvider from '@/components/ThemeProvider'
 import GlobalSettingsProvider from '@/contexts/GlobalSettingsContext'
 import { AuthProvider } from '@/contexts/AuthContext'
+import InsufficientBalanceProvider from '@/contexts/InsufficientBalanceContext'
+import InsufficientBalanceModal from '@/components/InsufficientBalanceModal'
 import Header from '@/components/Header'
 import { Metadata } from 'next'
 
@@ -21,8 +23,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <AuthProvider>
             <GlobalSettingsProvider>
-              <Header />
-              <main className="transition-colors duration-200">{children}</main>
+              <InsufficientBalanceProvider>
+                <Header />
+                <main className="transition-colors duration-200">{children}</main>
+                <InsufficientBalanceModal />
+              </InsufficientBalanceProvider>
             </GlobalSettingsProvider>
           </AuthProvider>
         </ThemeProvider>
